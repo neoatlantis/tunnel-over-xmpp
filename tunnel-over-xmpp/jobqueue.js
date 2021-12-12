@@ -11,8 +11,7 @@ class JobQueue {
             while(!self.destroyed){
                 nextjob = self.queue.shift();
                 if(undefined === nextjob){
-                    await new Promise((resolve, _)=>setImmediate(resolve));
-                    continue;
+                    break;
                 }
 
                 while(!self.destroyed){
@@ -23,10 +22,11 @@ class JobQueue {
                         console.error(e);
                     } finally {
                         await new Promise(
-                            (resolve, _)=>setImmediate(resolve));
+                            (resolve, _)=>setTimeout(resolve, 50));
                     }
                 }
             }
+            if(!self.destroyed){ setTimeout(start, 50); }
         }
         start();
     }
