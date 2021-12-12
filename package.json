@@ -1,0 +1,17 @@
+{
+  "name": "tunnel-over-xmpp",
+  "version": "1.0.0",
+  "description": "TCP and UDP tunnel using XMPP.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "NeoAtlantis",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@xmpp/client": "^0.13.0",
+    "json-rpc-2.0": "^1.0.0",
+    "socksv5": "^0.0.6",
+    "uuid": "^8.3.2"
+  }
+}
