@@ -41,12 +41,20 @@ class Client {
     }
 
     async _request_newconnection({addr, port}){
-        const result = await this.xmpprpc_client.request("connection", {
-            addr: addr,
-            port: port,
-            proto: "tcp",
-        });
-        return result.id;
+        try{
+            const result = await this.xmpprpc_client.request("connection", {
+                addr: addr,
+                port: port,
+                proto: "tcp",
+            });
+            if(result.id){
+                return result.id;
+            } else {
+                throw Error("Connection refused by server.");
+            }
+        } catch(e){
+            console.error("Failed requesting new connection.", e);
+        }
     }
 
     async _on_socket({info, socket}){
@@ -67,7 +75,6 @@ class Client {
                     ` by remote server.`);
                 return;
             }
-            console.log(`New connection confirmed. ID=${socket.id}`);
         });
     }
 

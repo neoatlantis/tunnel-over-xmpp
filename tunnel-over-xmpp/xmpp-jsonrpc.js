@@ -55,24 +55,28 @@ class XMPPRPCServer extends JSONRPCServer {
         this.timeout = options.timeout | 30000;
 
         this.client.iqCallee.set(RPCNS, "query", async (ctx)=>{
-            const jid_from = ctx.from.toString();
-
-            let jsonrpc = null;
             try{
-                jsonrpc = JSON.parse(unescapeXMLText(ctx.element.text()));
+                const jid_from = ctx.from.toString();
+
+                let jsonrpc = null;
+                try{
+                    jsonrpc = JSON.parse(unescapeXMLText(ctx.element.text()));
+                } catch(e){
+                    return ERR_BADREQUEST;
+                }
+                
+                let jsonrpc_resp = 
+                    await this.receive(jsonrpc, { userID: jid_from });
+                let stanza_xml = xml(
+                    "query",
+                    { xmlns: RPCNS },
+                    JSON.stringify(jsonrpc_resp)
+                );
+
+                return stanza_xml;
             } catch(e){
-                return ERR_BADREQUEST;
+                console.error("XMPP query response error", e);
             }
-            
-            let jsonrpc_resp = await this.receive(jsonrpc, { userID: jid_from });
-            let stanza_xml = xml(
-                "query",
-                { xmlns: RPCNS },
-                JSON.stringify(jsonrpc_resp)
-            );
-
-            return stanza_xml;
-
         });
 
     }
@@ -87,26 +91,30 @@ class XMPPRPCClient extends JSONRPCClient {
 
     constructor (options, client_instance){
         super(async function(jsonRPCRequest) {
-            let peer = self.peer;
-            if(jsonRPCRequest.$peer){
-                peer = jsonRPCRequest.$peer;
-                delete jsonRPCRequest.$peer;
-            }
-
-            const result = await self.client.iqCaller.request(
-                xml("iq", { type: "set", to: peer },
-                    xml(
-                        "query",
-                        { xmlns: RPCNS },
-                        escapeXMLText(JSON.stringify(jsonRPCRequest))
-                    )
-                )
-            );
-
             try{
-                const result_json = JSON.parse(result.children[0].text());
-                self.receive(result_json);
+                let peer = self.peer;
+                if(jsonRPCRequest.$peer){
+                    peer = jsonRPCRequest.$peer;
+                    delete jsonRPCRequest.$peer;
+                }
+
+                const result = await self.client.iqCaller.request(
+                    xml("iq", { type: "set", to: peer },
+                        xml(
+                            "query",
+                            { xmlns: RPCNS },
+                            escapeXMLText(JSON.stringify(jsonRPCRequest))
+                        )
+                    )
+                );
+
+                try{
+                    const result_json = JSON.parse(result.children[0].text());
+                    self.receive(result_json);
+                } catch(e){
+                }
             } catch(e){
+                console.error("XMPP request error", e);
             }
         });
 

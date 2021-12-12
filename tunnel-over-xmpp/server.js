@@ -35,25 +35,30 @@ class Server {
         const { addr, port } = options;
         console.log("new connection request", addr, port);
 
-        const socket = new net.Socket();
-        const connection_id = await setup_socket(this, socket, async ()=>{
-            // init function of this socket
+        let socket = net.Socket();
+        let socket_id = await setup_socket(this, socket, async ()=>{
             try{
-                await new Promise((resolve, reject)=>{
-                    socket.connect(port, addr, (err, result)=>{
-                        if(err) return reject(err);
-                        resolve(result);
-                    });
+                await new Promise(async (resolve, reject)=>{
+                    try{
+                        socket.once("error", reject);
+                        socket.connect(port, addr, resolve);
+                    } catch(e){
+                        reject(e);
+                    }
                 });
-                socket.id = utils.uuid(); // signals successful
-                console.log(`Connected to ${addr}:${port}`);
+                socket.id = utils.uuid();
+                console.log(`Connected to ${addr}:${port} as ${socket.id}`);
+                return socket.id;
             } catch(e){
                 console.log("Failed setting up socket.", e);
+                return;
             }
         });
 
-        if(connection_id){
-            return { id: connection_id }; // accepted
+        if(socket_id){
+            return { id: socket_id };
+        } else {
+            return { error: true };
         }
     }
 

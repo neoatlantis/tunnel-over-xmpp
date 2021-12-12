@@ -63,8 +63,10 @@ async function setup_socket(app, socket, initfunc){
     try{
         await initfunc();
         if(socket.id == undefined) throw Error();
+        console.log("New connection " + socket.id + " accepted.");
     } catch(e){
         // destroy socket
+        console.log("New connection " + socket.id + " discarded!!");
         destroy_connection(app, socket);
         return;
     }
@@ -84,7 +86,8 @@ async function setup_socket(app, socket, initfunc){
 async function write_to_socket(app, socket_id, data){
     if(sockets[socket_id] === undefined){
         console.error("Failed writting to ", socket_id, " -- not found.");
-        return; // TODO close xmpp socket_id
+        close_socket(app, socket_id);
+        return;
     }
     sockets[socket_id].recv_queue.push(data);
 }
